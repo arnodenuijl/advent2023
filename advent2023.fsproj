@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="utils.fs"/>
+        <Compile Include="q1.fs"/>
+        <Compile Include="q2.fs"/>
+        <Compile Include="q3.fs"/>
+        <Compile Include="Program.fs"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="FParsec" Version="1.1.1"/>
+        <PackageReference Include="FSharp.Collections.ParallelSeq" Version="1.2.0"/>
+    </ItemGroup>
+</Project>
