@@ -9,6 +9,7 @@
         <Compile Include="q2.fs"/>
         <Compile Include="q3.fs"/>
         <Compile Include="q4.fs" />
+        <Compile Include="q5.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
     <ItemGroup>

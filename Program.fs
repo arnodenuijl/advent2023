@@ -1,4 +1,3 @@
-﻿open q4
+﻿open q5
 
-q4a ()
-q4b ()
+q5a ()
