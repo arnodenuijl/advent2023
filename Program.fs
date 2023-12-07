@@ -1,3 +1,4 @@
-﻿open q5
+﻿open q6
 
-q5a ()
+q6a()
+q6b()

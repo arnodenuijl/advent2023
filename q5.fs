@@ -39,53 +39,114 @@ humidity-to-location map:
 60 56 37
 56 93 4"""
 
-let input = File.ReadAllText "05.txt"
-type Mapping = {
-    destinationRangeStart : int64
-    sourceRangeStart : int64
-    length : int64
-} with
-    member x.isInRange (n : Int64) =
-        n >= x.sourceRangeStart && n < x.sourceRangeStart + x.length
-    member x.map (n:int64) = n - (x.sourceRangeStart - x.destinationRangeStart)
+type Range = {
+    from : int64
+    uptoIncluding: int64
+}
 
-let map (mappings : Mapping list) (n: int64) =
-    let mapper =
-        mappings
-        |> List.tryFind(fun m -> m.isInRange n)
-        |> Option.map (_.map)
-        |> Option.defaultValue id
-    mapper n
-    
-        
+type Mapping = {
+    range : Range
+    delta : int64
+} 
+
+type Transformation = Mapping list
 
 module Parser =
     let seedsParser = pstring "seeds: " >>. sepBy pint64 (pchar ' ')
-    let mappingParser = pint64 .>> (pchar ' ') .>>. pint64 .>> (pchar ' ') .>>. pint64 .>> opt newline |>> fun ((a, b), c) -> { destinationRangeStart = a; sourceRangeStart = b; length = c}
+    let mappingParser = pint64 .>> (pchar ' ') .>>. pint64 .>> (pchar ' ') .>>. pint64 .>> opt newline
+                        |>> fun ((a, b), c) ->
+                            let range = { Range.from = b; Range.uptoIncluding = b + c - int64 1 }
+                            { range = range; Mapping.delta = a - b }
     let mappingsParser = many mappingParser 
-    // let seedToSoil = pstring "seed-to-soil map:" >>. newline >>. mappingsParser .>> newline 
-    // let soilToFertilizer = pstring "soil-to-fertilizer map:" >>. newline >>. mappingsParser .>> newline 
-    // let fertilizerToWater = pstring "fertilizer-to-water map:" >>. newline >>. mappingsParser .>> newline 
-    // let waterToLight = pstring "water-to-light map:" >>. newline >>. mappingsParser .>> newline 
-    // let lightToTemp = pstring "light-to-temperature map:" >>. newline >>. mappingsParser .>> newline 
-    // let tempToHumidity = pstring "temperature-to-humidity map:" >>. newline >>. mappingsParser .>> newline 
-    // let humidityToLocation = pstring "humidity-to-location map:" >>. newline >>. mappingsParser .>> newline
   
     let allMappings = many (charsTillString  "map:" true 100 >>. skipNewline >>. mappingsParser)
     let allParser = seedsParser .>> newline .>> newline .>>. allMappings
+    
 
-let seeds, mappings  =
-    run Parser.allParser input 
+type OverlapResult = {
+    overlapping : Range option
+    notOverlapping : Range list
+}
+
+let calculateOverlap (original: Range) (rangeToFindOverlap: Range) : OverlapResult =
+    if rangeToFindOverlap.from > original.uptoIncluding || rangeToFindOverlap.uptoIncluding < original.from then
+       { overlapping = None
+         notOverlapping = [rangeToFindOverlap] }
+    else // overlap
+        let overlapStart = Math.Max(rangeToFindOverlap.from, original.from)
+        let overlapEnd = Math.Min(rangeToFindOverlap.uptoIncluding, original.uptoIncluding)
+        let overlap = { from = overlapStart; uptoIncluding = overlapEnd }
+        let notOverlapping = seq {
+                if rangeToFindOverlap.from < overlap.from then yield { from = rangeToFindOverlap.from; uptoIncluding = overlap.from - int64 1 }
+                if rangeToFindOverlap.uptoIncluding > overlap.uptoIncluding then yield { from = overlap.uptoIncluding + int64 1; uptoIncluding = rangeToFindOverlap.uptoIncluding }
+            }
+        {
+            overlapping = Some overlap
+            notOverlapping = notOverlapping |> List.ofSeq
+        }    
+
+let applyDelta (x: Range) (delta: int64) : Range =
+            { from = x.from + delta
+              uptoIncluding = x.uptoIncluding + delta }
+
+let processMapping (mapping : Mapping) (ranges: Range list): {| mappedRanges: Range list; unmappedRanges: Range list |} =
+    ranges
+    |> List.fold
+            (fun acc range ->
+                let overlapResult = calculateOverlap mapping.range range
+                match overlapResult.overlapping with
+                | Some overlapRange ->
+                                   {| mappedRanges = (applyDelta overlapRange mapping.delta) :: acc.mappedRanges
+                                      unmappedRanges = acc.unmappedRanges @ overlapResult.notOverlapping |}
+                | None -> {| mappedRanges = acc.mappedRanges
+                             unmappedRanges = acc.unmappedRanges @ overlapResult.notOverlapping |})
+            {| mappedRanges = [] 
+               unmappedRanges = [] |}
+    
+
+let applyTransformationToInputRanges (transformation : Transformation) (ranges: Range list): Range list  =
+    let something =
+        transformation
+        |> List.fold
+            (fun (acc:  {| mappedRanges: Range list; unmappedRanges: Range list |})
+                 (mapping: Mapping) ->
+                let x  = processMapping mapping acc.unmappedRanges
+                {| mappedRanges = acc.mappedRanges @ x.mappedRanges
+                   unmappedRanges = x.unmappedRanges |}
+                   )
+            {| mappedRanges  = [] 
+               unmappedRanges = ranges |}
+    something.mappedRanges @ something.unmappedRanges
+
+let calculateMinimum (seedRanges: Range list) (transformations : Transformation list) =
+    transformations
+    |> List.fold
+        (fun (ranges: Range list) (transformation: Transformation) ->
+            transformation |> List.iter (fun t -> Console.WriteLine $"Mapping : {t}")
+            let result = applyTransformationToInputRanges transformation ranges
+            result)
+        seedRanges
+    |> List.map _.from
+    |> List.min
+
+let (seedsInput : int64 list, transformations : Transformation list) =
+    let input = File.ReadAllText "05.txt"
+    run Parser.allParser input  
         |> unwrapParserResult
-       
+        
 let q5a () =
-    let result =
-        seeds
-        |> List.map (fun seed ->
-                mappings
-                |> List.fold
-                    (fun (n : int64) (mapping : Mapping list) -> map mapping n)
-                    seed
-            )
-        |> List.min
+    let seedRanges =
+        seedsInput
+        |> List.map (fun s -> {Range.from = s;Range.uptoIncluding = s })
+    let result = calculateMinimum seedRanges transformations
+    Console.WriteLine $"5a2: {result}"
+
+let q5b () =
+    let seedRanges =
+        seedsInput
+        |> List.chunkBySize 2
+        |> List.map (fun seedCombo -> { Range.from = seedCombo[0] ; Range.uptoIncluding = seedCombo[0] + seedCombo[1] - int64 1})
+        
+    let result = calculateMinimum seedRanges transformations
     Console.WriteLine $"5b: {result}"
+    
