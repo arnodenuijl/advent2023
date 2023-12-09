@@ -35,6 +35,13 @@ let unwrapParserResult (r: ParserResult<'a, 'b>) =
 
 let inline charToInt c = int c - int '0'
 
+let rec greatestCommonDivisor a b =
+    let rec gcd' a b =
+        if b = 0L then a else gcd' b (a % b)
+    gcd' (abs a) (abs b)
+
+let lowestCommonMultiple a b = a*b/(greatestCommonDivisor a b)
+
 module Seq =
     let takeUntil predicate (source: seq<_>) =
         seq {

@@ -1,7 +1,5 @@
-﻿open q7
+﻿open q9
 
-
-
-q7a()
-q7b()
+q9a()
+q9b()
 
