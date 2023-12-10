@@ -42,6 +42,14 @@ let rec greatestCommonDivisor a b =
 
 let lowestCommonMultiple a b = a*b/(greatestCommonDivisor a b)
 
+let rec distribute e = function
+  | [] -> [[e]]
+  | x::xs' as xs -> (e::xs)::[for xs in distribute e xs' -> x::xs]
+
+let rec permute = function
+  | [] -> [[]]
+  | e::xs -> List.collect (distribute e) (permute xs)
+
 module Seq =
     let takeUntil predicate (source: seq<_>) =
         seq {

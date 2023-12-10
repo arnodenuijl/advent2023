@@ -62,3 +62,5 @@ let q9b () =
         |> List.sum
         
     Console.WriteLine $"9b: {result}" 
+    distribute 2 [0;1]
+    |> List.iter (fun x -> Console.WriteLine x)

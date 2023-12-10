@@ -1,5 +1,6 @@
-﻿open q9
+﻿open q10
 
-q9a()
-q9b()
+q10a()
+q10b()
+
 
