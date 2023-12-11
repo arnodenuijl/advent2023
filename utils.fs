@@ -3,6 +3,28 @@ module utils
 open System
 open FParsec
 
+module Array2D =
+    let printGrid (grid: 'a[,]) =
+        for x in [0..(Array2D.length1 grid) - 1] do
+            Console.WriteLine ""
+            for y in [0..(Array2D.length2 grid) - 1] do
+                Console.Write ((grid[x,y]).ToString())
+
+    let createGrid (input: String) =
+        let lines = input.Split Environment.NewLine
+        let linesLength = lines.Length
+        let columnsLength = lines[0].Length
+        let grid: char[,] = Array2D.create linesLength columnsLength ' '
+        for line in [0..linesLength - 1] do
+            for column in [0..columnsLength - 1] do
+                Array2D.set grid line column (lines[line][column])
+        grid
+    let transpose (grid : 'a[,]) : 'a[,] =
+        let transposed = Array2D.create (Array2D.length2 grid) (Array2D.length1 grid) Unchecked.defaultof<'a>
+        for x in [0..Array2D.length1 grid - 1] do
+            for y in [0..Array2D.length2 grid - 1] do
+                transposed[y,x] <- grid[x,y]
+        transposed
 let splitOnNewline (s: String) = s.Split(Environment.NewLine) |> Seq.ofArray
 let allPairs (items: 'a seq) =
     let list = List.ofSeq items
