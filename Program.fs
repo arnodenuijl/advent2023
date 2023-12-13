@@ -1,7 +1,7 @@
-﻿open q11
+﻿open q12
 
-q11a()
-q11b()
+q12a()
+q12b()
 
 
 
