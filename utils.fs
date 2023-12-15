@@ -19,12 +19,32 @@ module Array2D =
             for column in [0..columnsLength - 1] do
                 Array2D.set grid line column (lines[line][column])
         grid
+    
+    
+    
+    let turnCounterClockwise (grid : 'a[,]) : 'a[,] =
+        let transposed = Array2D.create (Array2D.length2 grid) (Array2D.length1 grid) Unchecked.defaultof<'a>
+        for x in [0..Array2D.length1 grid - 1] do
+            for y in [0..Array2D.length2 grid - 1] do
+                transposed[Array2D.length1 grid - 1 - y,x] <- grid[x,y]
+        transposed
+    
     let transpose (grid : 'a[,]) : 'a[,] =
         let transposed = Array2D.create (Array2D.length2 grid) (Array2D.length1 grid) Unchecked.defaultof<'a>
         for x in [0..Array2D.length1 grid - 1] do
             for y in [0..Array2D.length2 grid - 1] do
                 transposed[y,x] <- grid[x,y]
         transposed
+    
+    let rowsAsList (grid : 'a[,]) : 'a list list =
+        seq {
+            for rowNr in [0..(Array2D.length1 grid) - 1] do
+                yield
+                    [0..(Array2D.length2 grid) - 1]
+                    |> Seq.map(fun columnNr -> grid[rowNr,columnNr])
+                    |> List.ofSeq
+        } |> List.ofSeq
+        
 let splitOnNewline (s: String) = s.Split(Environment.NewLine) |> Seq.ofArray
 let allPairs (items: 'a seq) =
     let list = List.ofSeq items
