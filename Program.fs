@@ -1,7 +1,7 @@
-﻿open q19
+﻿open q20
 
-q19a()
-q19b()
+q20a()
+q20b()
 
 
 

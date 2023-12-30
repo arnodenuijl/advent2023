@@ -82,7 +82,7 @@ let rec greatestCommonDivisor a b =
         if b = 0L then a else gcd' b (a % b)
     gcd' (abs a) (abs b)
 
-let lowestCommonMultiple a b = a*b/(greatestCommonDivisor a b)
+let inline lowestCommonMultiple a b = a*b/(greatestCommonDivisor a b)
 
 let rec distribute e = function
   | [] -> [[e]]
